@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Local File Storage</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    #drop-area {
+      border: 2px dashed #3498db;
+      padding: 20px;
+      margin: 20px;
+      width: 300px;
+      text-align: center;
+      background-color: #3498db;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      color: white;
+    }
+
+    #filter-type,
+    #size-limit {
+      margin-bottom: 10px;
+      padding: 5px;
+      border: 1px solid #3498db;
+      border-radius: 4px;
+    }
+
+    #filter-type {
+      background-color: #3498db;
+      color: white;
+    }
+
+    #size-limit {
+      width: 200px;
+    }
+
+    #file-list {
+      border-collapse: collapse;
+      width: 320px;
+      margin-top: 20px;
+    }
+
+    #file-list th,
+    #file-list td {
+      padding: 10px;
+      border: 1px solid #3498db;
+    }
+
+    #file-list th {
+      background-color: #3498db;
+      color: white;
+    }
+
+    #file-list tbody tr:nth-child(even) {
+      background-color: #ecf0f1;
+    }
+  </style>
+</head>
+<body>
+  <input type="file" id="file-input" multiple>
+  <label for="file-input" id="drop-area">Drag & Drop files here</label>
+  <select id="filter-type">
+    <option value="all">All</option>
+    <option value="images">Images</option>
+    <option value="size">Under size limit</option>
+  </select>
+  <input type="number" id="size-limit" placeholder="Enter size in bytes">
+  <table id="file-list">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Size (bytes)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const filterType = document.getElementById('filter-type');
+    const sizeLimit = document.getElementById('size-limit');
+
+    function handleFiles(files) {
+      const filter = filterType.value;
+      const limit = parseInt(sizeLimit.value) || Infinity;
+
+      fileList.querySelector('tbody').innerHTML = '';
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        if (filter === 'images' && !file.type.startsWith('image/')) {
+          continue;
+        }
+
+        if (filter === 'size' && file.size > limit) {
+          continue;
+        }
+
+        const fileItem = document.createElement('tr');
+        fileItem.innerHTML = `
+          <td>${file.name}</td>
+          <td>${file.type || 'Unknown'}</td>
+          <td>${file.size} bytes</td>
+        `;
+
+        fileList.querySelector('tbody').appendChild(fileItem);
+
+
+        const fileInfo = {
+          name: file.name,
+          type: file.type || 'Unknown',
+          size: file.size
+        };
+        localStorage.setItem(file.name, JSON.stringify(fileInfo));
+      }
+    }
+
+    fileInput.addEventListener('change', function(event) {
+      const files = event.target.files;
+      handleFiles(files);
+    });
+
+    filterType.addEventListener('change', function() {
+      const files = fileInput.files || [];
+      handleFiles(files);
+    });
+
+    sizeLimit.addEventListener('input', function() {
+      const files = fileInput.files || [];
+      handleFiles(files);
+    });
+
+
+    window.onload = function() {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const fileInfo = JSON.parse(localStorage.getItem(key));
+
+        const fileItem = document.createElement('tr');
+        fileItem.innerHTML = `
+          <td>${fileInfo.name}</td>
+          <td>${fileInfo.type}</td>
+          <td>${fileInfo.size} bytes</td>
+        `;
+
+        fileList.querySelector('tbody').appendChild(fileItem);
+      }
+    };
+  </script>
+</body>
+</html>
